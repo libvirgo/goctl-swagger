@@ -29,6 +29,10 @@ var (
 					Name:  "filename",
 					Usage: "swagger save file name",
 				},
+				&cli.BoolFlag{
+					Name:  "https",
+					Usage: "only https scheme",
+				},
 			},
 		},
 	}

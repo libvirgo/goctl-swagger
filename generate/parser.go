@@ -51,14 +51,19 @@ func parseRangeOption(option string) (float64, float64, bool) {
 	return min, max, true
 }
 
-func applyGenerate(p *plugin.Plugin, host string, basePath string) (*swaggerObject, error) {
+func applyGenerate(p *plugin.Plugin, host string, basePath string, https bool) (*swaggerObject, error) {
 	title, _ := strconv.Unquote(p.Api.Info.Properties["title"])
 	version, _ := strconv.Unquote(p.Api.Info.Properties["version"])
 	desc, _ := strconv.Unquote(p.Api.Info.Properties["desc"])
 
 	s := swaggerObject{
-		Swagger:           "2.0",
-		Schemes:           []string{"http", "https"},
+		Swagger: "2.0",
+		Schemes: func() []string {
+			if https {
+				return []string{"https"}
+			}
+			return []string{"https", "http"}
+		}(),
 		Consumes:          []string{"application/json"},
 		Produces:          []string{"application/json"},
 		Paths:             make(swaggerPathsObject),

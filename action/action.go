@@ -19,5 +19,10 @@ func Generator(ctx *cli.Context) error {
 	}
 	basepath := ctx.String("basepath")
 	host := ctx.String("host")
-	return generate.Do(fileName, host, basepath, p)
+	https := ctx.Bool("https")
+	if err = generate.Do(fileName, host, basepath, https, p); err != nil {
+		return err
+	}
+	print("generate " + fileName + " success")
+	return nil
 }
