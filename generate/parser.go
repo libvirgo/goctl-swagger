@@ -374,6 +374,9 @@ func renderReplyAsDefinition(d swaggerDefinitionsObject, m messageMap, p []spec.
 			*schema.Properties = append(*schema.Properties, kv)
 
 			for _, tag := range member.Tags() {
+				if tag.Key == "gorm" || tag.Key == "validate" || (tag.Key == "json" && tag.Name == "-") {
+					continue
+				}
 				if len(tag.Options) == 0 {
 					if !contains(schema.Required, tag.Name) && tag.Name != "required" {
 						schema.Required = append(schema.Required, tag.Name)
