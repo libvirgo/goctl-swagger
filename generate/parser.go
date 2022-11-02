@@ -326,6 +326,8 @@ func renderStruct(member spec.Member) swaggerParameterObject {
 	return sp
 }
 
+var ValidTag = []string{"header", "json", "form", "path"}
+
 func renderReplyAsDefinition(d swaggerDefinitionsObject, m messageMap, p []spec.Type, refs refMap) {
 	for _, i2 := range p {
 		schema := swaggerSchemaObject{
@@ -374,7 +376,7 @@ func renderReplyAsDefinition(d swaggerDefinitionsObject, m messageMap, p []spec.
 			*schema.Properties = append(*schema.Properties, kv)
 
 			for _, tag := range member.Tags() {
-				if tag.Key == "gorm" || tag.Key == "validate" || (tag.Key == "json" && tag.Name == "-") {
+				if !contains(ValidTag, tag.Key) || tag.Name == "-" {
 					continue
 				}
 				if len(tag.Options) == 0 {
