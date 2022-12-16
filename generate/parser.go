@@ -2,7 +2,10 @@ package generate
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/stringx"
+	"github.com/zeromicro/go-zero/tools/goctl/util"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -27,6 +30,15 @@ const (
 	optionSeparator = "|"
 	equalToken      = "="
 )
+const (
+	bodyTagKey        = "json"
+	formTagKey        = "form"
+	pathTagKey        = "path"
+	defaultSummaryKey = "summary"
+	headerTagKey      = "header"
+)
+
+var definedKeys = []string{bodyTagKey, formTagKey, pathTagKey, headerTagKey}
 
 func parseRangeOption(option string) (float64, float64, bool) {
 	const str = "\\[([+-]?\\d+(\\.\\d+)?):([+-]?\\d+(\\.\\d+)?)\\]"
@@ -149,6 +161,7 @@ func renderServiceRoutes(service spec.Service, groups []spec.Group, paths swagge
 				}
 			}
 			if defineStruct, ok := route.RequestType.(spec.DefineStruct); ok {
+
 				if strings.ToUpper(route.Method) == http.MethodGet {
 					for _, member := range defineStruct.Members {
 						if strings.Contains(member.Tag, "path") {
@@ -163,7 +176,6 @@ func renderServiceRoutes(service spec.Service, groups []spec.Group, paths swagge
 						parameters = append(parameters, renderStruct(member))
 					}
 				} else {
-
 					reqRef := fmt.Sprintf("#/definitions/%s", route.RequestType.Name())
 
 					if len(route.RequestType.Name()) > 0 {
@@ -277,7 +289,6 @@ func renderStruct(member spec.Member) swaggerParameterObject {
 	} else {
 		sp = swaggerParameterObject{In: "query", Type: ftype, Format: format}
 	}
-
 	for _, tag := range member.Tags() {
 		sp.Name = tag.Name
 		if len(tag.Options) == 0 {
@@ -350,7 +361,7 @@ func renderReplyAsDefinition(d swaggerDefinitionsObject, m messageMap, p []spec.
 			}
 			kv := keyVal{Value: schemaOfField(member)}
 			kv.Key = member.Name
-			if tag, err := member.GetPropertyName(); err == nil {
+			if tag, err := GetPropertyName(member); err == nil {
 				kv.Key = tag
 			}
 			if kv.Key == "" {
@@ -409,6 +420,21 @@ func renderReplyAsDefinition(d swaggerDefinitionsObject, m messageMap, p []spec.
 
 		d[i2.Name()] = schema
 	}
+}
+
+// GetPropertyName returns json tag value
+func GetPropertyName(m spec.Member) (string, error) {
+	tags := m.Tags()
+	for _, tag := range tags {
+		if stringx.Contains(definedKeys, tag.Key) {
+			if tag.Name == "-" {
+				return util.Untitle(m.Name), nil
+			}
+			return tag.Name, nil
+		}
+	}
+
+	return "", errors.New("json property name not exist, member: " + m.Name)
 }
 
 func hasPathParameters(member spec.Member) bool {
